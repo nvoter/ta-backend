@@ -28,3 +28,83 @@
 docker-compose up --build -d
 ```
 Микросервисы можно запускать в произвольном порядке, но users-microservice и applications-microservice должны быть запущены после notifications-microservice
+
+Перед тестированием подачи заявки от имени студента необходимо создать активную кампанию от лица администратора и бакет `gradebooks` в MinIO через [админ-панель](http://localhost:9001)
+
+## Выполнение по критериям
+### 1.1 Приложение поддерживает аутентификацию пользователей и контроль доступа к API
+Аутентификация пользователей с выдачей JWT-токенов реализована в users-microservice. Для аутентификации необходимо воспользоваться **корпоративной электронной почтой**, на которую придет письмо с кодом подтверждения
+
+Контроль доступа к API реализован посредством API-ключей
+
+### 1.2 Приложение имеет gRPC или HTTP API (минимум четыре бизнес-метода: создание, получение, изменение, удаление)
+Каждый микросервис имеет HTTP API. Все четыре типа эндпоинтов представлены в applications-microservice для управления кампаниями
+
+### 1.3 Все сервисы и API покрыты тестами (unit и функциональными)
+Скрины отчетов по тестовому покрытию сервисов и API для всех представленных микросервисов:
+<img width="1168" height="160" alt="image" src="https://github.com/user-attachments/assets/e7925285-4fd1-4aa6-8c42-086b35194f06" />
+<img width="1168" height="160" alt="image" src="https://github.com/user-attachments/assets/faf0f418-86c2-4b9b-b0d0-d05c53ef04fe" />
+<img width="1168" height="160" alt="image" src="https://github.com/user-attachments/assets/d2bcc19c-3600-4999-b289-55fc667e6135" />
+<img width="1168" height="160" alt="image" src="https://github.com/user-attachments/assets/0b9509ec-b1ec-493e-aa0b-8fee952f6e36" />
+
+### 1.4 Приложение использует внешнюю БД для хранения пользователей и бизнес-информации
+Каждый микросервис имеет свою базу данных PostgreSQL (на скрине - контейнеры с суффиксом -postgres): 
+<img width="1204" height="499" alt="image" src="https://github.com/user-attachments/assets/b428fc43-54ec-4d38-98e7-f46251132e9b" />
+
+### 1.5 Схема базы данных создаётся при запуске или деплое приложения, поддерживается версионирование схемы
+Реализовано с помощью Flyway. Для миграций необходимо положить файл `V2__{name}.sql` с обновленным SQL-скриптом в `src/main/resources/db/migrations` 
+
+<img width="367" height="149" alt="image" src="https://github.com/user-attachments/assets/30a8ec33-5972-40b8-956d-46ec9ec03e6b" />
+
+Историю версий можно отслеживать в автоматически создающейся таблице `flyway_schema_history`
+<img width="367" height="269" alt="image" src="https://github.com/user-attachments/assets/56b16643-498f-474c-b051-5b1cd790e181" />
+
+### 1.6 Схема базы данных отражается в код при сборке. Несоответствие ORM-моделей, запросов и схемы приводит к ошибке сборки
+Выполняется с помощью скриптов в `gradle/schema-tools` при выполнении команды
+```
+./gradlew build
+```
+<img width="1016" height="417" alt="image" src="https://github.com/user-attachments/assets/14e783b0-65b7-4fd2-9659-0a1b978bf3d5" />
+
+### 2.1 Приложение поддерживает логирование
+Во всех сервисах есть логирование с помощью Slf4j. Пример из disciplines-microservice:
+<img width="1174" height="103" alt="image" src="https://github.com/user-attachments/assets/3c5428d8-0b4b-4858-9049-0805f0ad37cf" />
+
+### 2.2 Приложение поддерживает метрики
+Сбор метрик реализован с помощью prometheus:
+* [users-microservice](http://localhost:8089/actuator/prometheus)
+* [disciplines-microservice](http://localhost:8084/actuator/prometheus)
+* [notifications-microservice](http://localhost:8088/actuator/prometheus)
+* [applications-microservice](http://localhost:8087/actuator/prometheus)
+
+Пример для applications-microservice:
+<img width="798" height="843" alt="image" src="https://github.com/user-attachments/assets/24281d68-1725-4b85-8fa3-4789a9b2dd1d" />
+
+### 3.1 Каждый коммит в мастер-ветку собирается при помощи CI/CD системы. В случае ошибочной сборки об этом сигнализируется каким-либо образом (плашка на GitHub, нотификация в чат-бот)
+В main-ветке каждого репозитория лежит файл `.github/workflows/ci.yml`, который инициирует сборку и прогон тестов при каждом пуше или пуллреквесте. Пример из users-microservice:
+<img width="1062" height="266" alt="image" src="https://github.com/user-attachments/assets/1f572960-44ec-4647-97e8-1e656e703e5c" />
+
+### 3.2 По всем API-методам есть Swagger-документация, доступная из приложения
+* [users-microservice](http://localhost:8089/swagger-ui/index.html)
+* [disciplines-microservice](http://localhost:8084/swagger-ui/index.html)
+* [notifications-microservice](http://localhost:8088/swagger-ui/index.html)
+* [applications-microservice](http://localhost:8087/swagger-ui/index.html)
+
+Пример Swagger-документации из users-microservice:
+<img width="765" height="786" alt="image" src="https://github.com/user-attachments/assets/8561daf9-470c-4a81-9e15-eb15317e9e53" />
+
+### Итог
+| Пункт задания                                                                                                                                                                        | Выполнено или нет | Количество баллов |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|-------------------|
+| 1.1 Приложение поддерживает аутентификацию пользователей и контроль доступа к API                                                                                                    | Да                | 2/3 из 2/3        |
+| 1.2 Приложение имеет gRPC или HTTP API (минимум четыре бизнес-метода: создание, получение, изменение, удаление)                                                                      | Да                | 2/3 из 2/3        |
+| 1.3 Все сервисы и API покрыты тестами (unit и функциональными)                                                                                                                       | Да                | 2/3 из 2/3        |
+| 1.4 Приложение использует внешнюю БД для хранения пользователей и бизнес-информации                                                                                                  | Да                | 2/3 из 2/3        |
+| 1.5 Схема базы данных создаётся при запуске или деплое приложения, поддерживается версионирование схемы                                                                              | Да                | 2/3 из 2/3        |
+| 1.6 Схема базы данных отражается в код при сборке. Несоответствие ORM-моделей, запросов и схемы приводит к ошибке сборки                                                             | Да                | 2/3 из 2/3        |
+| 2.1 Приложение поддерживает логирование                                                                                                                                              | Да                | 1 из 1            |
+| 2.2 Приложение поддерживает метрики                                                                                                                                                  | Да                | 1 из 1            |
+| 2.3 Приложение может быть запущено в Kubernetes (приложение, БД, логирование, балансировщик и сервис)                                                                                | Нет               | 0 из 1            |
+| 2.4 Поддерживается сборка логов приложения и всех взаимодействующих с приложением инфраструктурных объектов в Kubernetes                                                             | Нет               | 0 из 1            |
+| 3.1 Каждый коммит в мастер-ветку собирается при помощи CI/CD системы. В случае ошибочной сборки об этом сигнализируется каким-либо образом (плашка на GitHub, нотификация в чат-бот) | Да                | 1 из 1            |
+| 3.2 По всем API-методам есть Swagger-документация, доступная из приложения                                                                                                           | Да                | 1 из 1            |
